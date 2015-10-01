@@ -1188,5 +1188,125 @@ describe('Swagger Validator Middleware v2.0', function () {
           .end(done);
       });
     });
+
+    it('should return an error for decimal "integers" (Issue 279)', function (done) {
+      var cPetStore = _.cloneDeep(petStoreJson);
+      var expectedMessage = 'Request validation failed: Parameter (arg0) is not a valid integer: 1.1';
+
+      cPetStore.paths['/pets/{id}'].get.parameters = [{
+        in: 'query',
+        name: 'arg0',
+        type: 'integer'
+      }];
+
+      helpers.createServer([cPetStore], {}, function (app) {
+        request(app)
+          .get('/api/pets/1')
+          .query({
+            arg0: 1.1
+          })
+          .expect(400)
+          .end(helpers.expectContent(expectedMessage, done));
+      });
+    });
+
+    it('should return an error for number+string "numbers" (Issue 279)', function (done) {
+      var cPetStore = _.cloneDeep(petStoreJson);
+      var expectedMessage = 'Request validation failed: Parameter (arg0) is not a valid number: 2something';
+
+      cPetStore.paths['/pets/{id}'].get.parameters = [{
+        in: 'query',
+        name: 'arg0',
+        type: 'number'
+      }];
+
+      helpers.createServer([cPetStore], {}, function (app) {
+        request(app)
+          .get('/api/pets/1')
+          .query({
+            arg0: '2something'
+          })
+          .expect(400)
+          .end(helpers.expectContent(expectedMessage, done));
+      });
+    });
+
+    it('should return an error for number+string "integers" (Issue 279)', function (done) {
+      var cPetStore = _.cloneDeep(petStoreJson);
+      var expectedMessage = 'Request validation failed: Parameter (arg0) is not a valid integer: 2something';
+
+      cPetStore.paths['/pets/{id}'].get.parameters = [{
+        in: 'query',
+        name: 'arg0',
+        type: 'integer'
+      }];
+
+      helpers.createServer([cPetStore], {}, function (app) {
+        request(app)
+          .get('/api/pets/1')
+          .query({
+            arg0: '2something'
+          })
+          .expect(400)
+          .end(helpers.expectContent(expectedMessage, done));
+      });
+    });
+
+    describe('should handle allowEmptyValue (Issue 282)', function () {
+      it('allowEmptyValue false', function (done) {
+        var cPetStore = _.cloneDeep(petStoreJson);
+        var expectedMessage = 'Request validation failed: Parameter (arg0) is not a valid integer: ';
+
+        cPetStore.paths['/pets/{id}'].get.parameters = [{
+            in: 'query',
+          name: 'arg0',
+          type: 'integer'
+        }];
+
+        helpers.createServer([cPetStore], {}, function (app) {
+          request(app)
+            .get('/api/pets/1')
+            .query({
+              arg0: ''
+            })
+            .expect(400)
+            .end(helpers.expectContent(expectedMessage, done));
+        });
+      });
+
+      it('allowEmptyValue true', function (done) {
+        var cPetStore = _.cloneDeep(petStoreJson);
+
+        cPetStore.paths['/pets/{id}'].get.parameters = [{
+            in: 'query',
+          name: 'arg0',
+          type: 'integer',
+          allowEmptyValue: true
+        }];
+
+        helpers.createServer([cPetStore], {
+          swaggerRouterOptions: {
+            controllers: {
+              getPetById: function (req, res) {
+                res.end('OK');
+              }
+            }
+          }
+        }, function (app) {
+          try {
+            request(app)
+              .get('/api/pets/1')
+              .query({
+                arg0: ''
+              })
+              .expect(200)
+              .end(helpers.expectContent('OK', done));
+          } catch (err) {
+            console.log(err.stack);
+            done();
+          }
+        });
+      });
+    });
   });
 });

@@ -1,5 +1,11 @@
 ## Release Notes
 
+### v0.9.6 (2015-09-30)
+
+* Add support for `allowEmptyValue` for parameters *(Issue #282)*
+* Better integer/number validation for parameter values *(PR #279)*
+* Fix missing mock support for `date` and `date-time` *(Issue #277)*
+
 ### v0.9.5 (2015-08-20)
 
 * Fixed a problem with 304 requests running middleware twice _(PR 270)_
